@@ -69,7 +69,9 @@ int main()
 	// "testData/Cloud_TestData.png"
 	//testData/s/cloud1.jpg
 	String imgName = "cloud2";
-	image = cv::imread("testData/s/cloud2.jpg");
+	String srcfileType = ".jpg";
+	String srcfilePlace = "testData/s/";
+	image = cv::imread(srcfilePlace+imgName+srcfileType);
 
 	if (!image.data) // Check for invalid input
 	{
@@ -85,8 +87,7 @@ int main()
 	int leftX = image.cols, leftY = image.rows, rightX = 0, rightY = 0;
 	int allArea = image.cols * image.rows;
 	int ex = 0;
-	int hogBlockNum = 2;
-	String filePlace = "E:/testvs/pdata/0711/";
+	String filePlace = "E:/testvs/pdata/0711/useimg";
 	Scalar bgColor = Scalar(255, 0, 255);
 	cout << leftX << " " << leftY << " " << rightX << " " << rightY << "\n";
 	Mat imgBinary2;
@@ -216,25 +217,18 @@ int main()
 			}
 
 			drawContours(image, contours, i, cv::Scalar(0, 0, 255), 2, 8, hierarchy);
-			////imgLBP = LBP(foregroundROI);
-			////int** hogArray[hogBlockNum][256] = hog(imgLBP,hogBlockNum);
-			//String ii = to_string(i);
-			//namedWindow(ii);
-			//imshow(ii, imgLBP);
-			//imwrite(filePlace + imgName+"-"+ii+".jpg", imgLBP);
-			//cout<<"\n\ncontour-"<< i <<":\nArea: "<< subArea<<"   Rate: "<<subArea / allArea << "\n";
-			//cout << "ROI  x: " << bounding_rect.x << " y: " << bounding_rect.y << " width: " << bounding_rect.width << " height: " << bounding_rect.height << "\n";
-			//cout<<"average:\n";
-			//cout<<"R: "<<cloudR / cloudPixels<<"   G: "<<cloudG / cloudPixels<<"   B: "<<cloudB / cloudPixels<<"\n";
-			//cout<<"H: "<<cloudH / cloudPixels<<"   S: "<<cloudS / cloudPixels<<"   V: "<<cloudV / cloudPixels<<"\n";
+			imgLBP = LBP(foregroundROI);
+			String ii = to_string(i);
+			namedWindow(ii);
+			imshow(ii, imgLBP);
+			imwrite(filePlace + imgName+"-"+ii+".jpg", imgLBP);
+			cout<<"\n\ncontour-"<< i <<":\nArea: "<< subArea<<"   Rate: "<<subArea / allArea << "\n";
+			cout << "ROI  x: " << bounding_rect.x << " y: " << bounding_rect.y << " width: " << bounding_rect.width << " height: " << bounding_rect.height << "\n";
+			cout<<"average:\n";
+			cout<<"R: "<<cloudR / cloudPixels<<"   G: "<<cloudG / cloudPixels<<"   B: "<<cloudB / cloudPixels<<"\n";
+			cout<<"H: "<<cloudH / cloudPixels<<"   S: "<<cloudS / cloudPixels<<"   V: "<<cloudV / cloudPixels<<"\n";
 
-			//// for(int k = 0; k< hogBlockNum;k++){
-			//	// cout<< k<<"[ ";
-			//	// for(int z = 0; z < 256;z++){
-			//		// cout<< hogArray[k][z]<<" ";
-			//	// }
-			//	// cout<< "]/n";
-			//// }
+			
 		}
 	}
 
@@ -247,14 +241,14 @@ int main()
 	imshow("foregroundBinary", foregroundBinary);
 	imwrite(filePlace + imgName + "-foregroundBinary.jpg", foregroundBinary);
 
-	namedWindow("first grabcut");
-	imshow("first grabcut", foregroundTemp);
-	imwrite(filePlace + imgName + "-first grabcut.jpg", foregroundTemp);
+	namedWindow("foregroundTemp");
+	imshow("foregroundTemp", foregroundTemp);
+	imwrite(filePlace + imgName + "-foregroundTemp.jpg", foregroundTemp);
 
 	// display result
 	namedWindow("foreground");
 	imshow("foreground", foreground);
-	imwrite(filePlace + imgName + "-foreground1.jpg", foreground);
+	imwrite(filePlace + imgName + "-foreground.jpg", foreground);
 
 	/*namedWindow("getContours");
 	imshow("getContours", getContours);
