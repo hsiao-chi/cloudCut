@@ -251,9 +251,9 @@ int main()
 	imwrite(filePlace + imgName + "-foreground.jpg", foreground);
 
 	/*namedWindow("getContours");
-	imshow("getContours", getContours);
+	imshow("getContours", getContours);*/
 	imwrite(filePlace + imgName + "-getContours.jpg", getContours);
-*/
+
 
 	waitKey();
 	return 0;
