@@ -68,10 +68,10 @@ int main()
 	Mat image;
 	// "testData/Cloud_TestData.png"
 	//testData/s/cloud1.jpg
-	String imgName = "cloud2";
+	String imgName = "cloud5";
 	String srcfileType = ".jpg";
 	String srcfilePlace = "testData/s/";
-	image = cv::imread(srcfilePlace+imgName+srcfileType);
+	image = cv::imread(srcfilePlace + imgName + srcfileType);
 
 	if (!image.data) // Check for invalid input
 	{
@@ -87,7 +87,7 @@ int main()
 	int leftX = image.cols, leftY = image.rows, rightX = 0, rightY = 0;
 	int allArea = image.cols * image.rows;
 	int ex = 0;
-	String filePlace = "E:/testvs/pdata/0711/useimg";
+	String filePlace = "E:/testvs/pdata/0712/hull/";
 	Scalar bgColor = Scalar(255, 0, 255);
 	cout << leftX << " " << leftY << " " << rightX << " " << rightY << "\n";
 	Mat imgBinary2;
@@ -131,21 +131,21 @@ int main()
 		uchar *ptr1 = image.ptr<uchar>(y);
 		for (int x = 0; x < image.cols; x++)
 		{
-			 if (!((int)ptr1[3 * x] > whiteRGB && (int)ptr1[3 * x + 1] > whiteRGB && (int)ptr1[3 * x + 2] > whiteRGB))
-			 {
-			 	ptr2[x] = GC_PR_BGD;
-			 }
-			 else if (((int)ptr1[3 * x] > whiteRGB && (int)ptr1[3 * x + 1] > whiteRGB && (int)ptr1[3 * x + 2] > whiteRGB))
-			 {
-			 	ptr2[x] = GC_PR_FGD;
-			 }
-			/*if ((int)ptr1[x] == 0 )
+			if (!((int)ptr1[3 * x] > whiteRGB && (int)ptr1[3 * x + 1] > whiteRGB && (int)ptr1[3 * x + 2] > whiteRGB))
 			{
 				ptr2[x] = GC_PR_BGD;
 			}
-			else if ((int)ptr1[x] == 255)
+			else if (((int)ptr1[3 * x] > whiteRGB && (int)ptr1[3 * x + 1] > whiteRGB && (int)ptr1[3 * x + 2] > whiteRGB))
 			{
 				ptr2[x] = GC_PR_FGD;
+			}
+			/*if ((int)ptr1[x] == 0 )
+			{
+			ptr2[x] = GC_PR_BGD;
+			}
+			else if ((int)ptr1[x] == 255)
+			{
+			ptr2[x] = GC_PR_FGD;
 			}*/
 		}
 	}
@@ -154,18 +154,19 @@ int main()
 	image.copyTo(foregroundTemp, resultTemp); // bg pixels not copied
 
 	grabCut(image,					// input image
-			result,					// segmentation result
-			cv::Rect(),				// rectangle containing foreground
-			bgModel, fgModel,		// models
-			2,						// number of iterations
-			cv::GC_INIT_WITH_MASK); // use rectangle
-									// Get the pixels marked as likely foreground
+		result,					// segmentation result
+		cv::Rect(),				// rectangle containing foreground
+		bgModel, fgModel,		// models
+		1,						// number of iterations
+		cv::GC_INIT_WITH_MASK); // use rectangle
+								// Get the pixels marked as likely foreground
 
 	compare(result, cv::GC_PR_FGD, result, cv::CMP_EQ);
 	Mat foreground(image.size(), CV_8UC3, bgColor);
 	Mat foregroundBinary(image.size(), CV_8UC1, cv::Scalar(0));
 	Mat whiteImg(image.size(), CV_8UC1, cv::Scalar(255));
 	Mat getContours(image.size(), CV_8UC3, cv::Scalar(0, 0, 0));
+	Mat getHulls_b(image.size(), CV_8UC1, cv::Scalar(0));
 	Mat imgLBP;
 	image.copyTo(foreground, result); // bg pixels not copied
 	whiteImg.copyTo(foregroundBinary, result);
@@ -173,6 +174,7 @@ int main()
 	vector<vector<Point>> contours;
 	vector<Vec4i> hierarchy;
 	findContours(foregroundBinary, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	vector<vector<Point>>hull(contours.size());
 	for (int i = 0; i < contours.size(); i++)
 	{
 		double subArea = contourArea(contours[i], false);
@@ -183,6 +185,8 @@ int main()
 
 			Rect bounding_rect = boundingRect(contours[i]);
 
+			convexHull(Mat(contours[i]), hull[i], false);
+			drawContours(getHulls_b, hull, i, Scalar(255), CV_FILLED, 8, hierarchy);
 			drawContours(getContours, contours, i, bgColor, CV_FILLED, 8, hierarchy);
 			cv::rectangle(getContours, bounding_rect, cv::Scalar(0, 0, 255), 2);
 
@@ -221,14 +225,14 @@ int main()
 			String ii = to_string(i);
 			namedWindow(ii);
 			imshow(ii, imgLBP);
-			imwrite(filePlace + imgName+"-"+ii+".jpg", imgLBP);
-			cout<<"\n\ncontour-"<< i <<":\nArea: "<< subArea<<"   Rate: "<<subArea / allArea << "\n";
+			imwrite(filePlace + imgName + "-" + ii + ".jpg", imgLBP);
+			cout << "\n\ncontour-" << i << ":\nArea: " << subArea << "   Rate: " << subArea / allArea << "\n";
 			cout << "ROI  x: " << bounding_rect.x << " y: " << bounding_rect.y << " width: " << bounding_rect.width << " height: " << bounding_rect.height << "\n";
-			cout<<"average:\n";
-			cout<<"R: "<<cloudR / cloudPixels<<"   G: "<<cloudG / cloudPixels<<"   B: "<<cloudB / cloudPixels<<"\n";
-			cout<<"H: "<<cloudH / cloudPixels<<"   S: "<<cloudS / cloudPixels<<"   V: "<<cloudV / cloudPixels<<"\n";
+			cout << "average:\n";
+			cout << "R: " << cloudR / cloudPixels << "   G: " << cloudG / cloudPixels << "   B: " << cloudB / cloudPixels << "\n";
+			cout << "H: " << cloudH / cloudPixels << "   S: " << cloudS / cloudPixels << "   V: " << cloudV / cloudPixels << "\n";
 
-			
+
 		}
 	}
 
@@ -240,6 +244,9 @@ int main()
 	namedWindow("foregroundBinary");
 	imshow("foregroundBinary", foregroundBinary);
 	imwrite(filePlace + imgName + "-foregroundBinary.jpg", foregroundBinary);
+	namedWindow("getHulls_b");
+	imshow("getHulls_b", getHulls_b);
+	imwrite(filePlace + imgName + "-getHulls_b.jpg", getHulls_b);
 
 	namedWindow("foregroundTemp");
 	imshow("foregroundTemp", foregroundTemp);
