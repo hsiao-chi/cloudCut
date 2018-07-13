@@ -68,6 +68,8 @@ int main()
 	Mat image;
 	// "testData/Cloud_TestData.png"
 	//testData/s/cloud1.jpg
+	int whiteRGB = 120;
+	String filePlace = "E:/testvs/pdata/0712/hull/";
 	String imgName = "cloud5";
 	String srcfileType = ".jpg";
 	String srcfilePlace = "testData/s/";
@@ -79,15 +81,8 @@ int main()
 		return -1;
 	}
 
-	// define bounding rectangle
-	int border = 20;
-	int border2 = border + border;
-	int whiteRGB = 120;
-	int whiteV = 150;
 	int leftX = image.cols, leftY = image.rows, rightX = 0, rightY = 0;
 	int allArea = image.cols * image.rows;
-	int ex = 0;
-	String filePlace = "E:/testvs/pdata/0712/hull/";
 	Scalar bgColor = Scalar(255, 0, 255);
 	cout << leftX << " " << leftY << " " << rightX << " " << rightY << "\n";
 	Mat imgBinary2;
