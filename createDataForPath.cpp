@@ -99,9 +99,12 @@ int main()
 				{
 					key = 2;
 				}
-				else if (leftCloud <= rightCloud)
+				else if (leftCloud <= rightCloud && rightCloud > cloudRateThreshold)
 				{
 					key = 1;
+				}
+				else{
+					key = 0;
 				}
 
 				//namedWindow(imgName + "_" + to_string(i) + to_string(j));
