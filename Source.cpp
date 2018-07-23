@@ -241,7 +241,7 @@ int main()
 	imwrite(filePlace + imgName + "-foregroundBinary.jpg", foregroundBinary);
 	namedWindow("getHulls_b");
 	imshow("getHulls_b", getHulls_b);
-	imwrite(filePlace + imgName + "-getHulls_b.jpg", getHulls_b);
+	imwrite(filePlace + imgName + "-getHulls_b.png", getHulls_b);
 
 	namedWindow("foregroundTemp");
 	imshow("foregroundTemp", foregroundTemp);
