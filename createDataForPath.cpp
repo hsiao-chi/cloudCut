@@ -8,12 +8,12 @@ using namespace std;
 int main()
 {
 	Mat image;
-	String filePlace = "E:/testvs/pdata/0721/hull256x128/";
-	String srcfileType = ".jpg";
-	String srcfilePlace = "E:/testvs/pdata/0713/hull/";
+	String filePlace = "E:/testvs/pdata/0723/hull64x32/";
+	String srcfileType = ".png";
+	String srcfilePlace = "E:/testvs/pdata/0723/hull/";
 	int fIndex = 453;
-	int ROISize_width = 256;
-	int ROISize_height = 128;
+	int ROISize_width = 64;
+	int ROISize_height = 32;
 	float ROIArea = ROISize_width * ROISize_height;
 	float cloudRateThreshold = 0.1;
 	float cloudDiffThreshold = 0.05;
@@ -42,7 +42,7 @@ int main()
 			system("pause");
 			return -1;
 		}
-
+		resize(image,image,Size(image.cols/4,image.rows/4),0,0,CV_INTER_AREA);
 	// ----------------- 算一張圖可以放下幾行幾列的小圖 ------------------//
 		x = 0;
 		y = 0;
@@ -134,7 +134,7 @@ int main()
 				float temp = (abs(leftCloud - rightCloud) / (ROIArea));
 				//cout << "    L = " << leftCloud << " R = " << rightCloud << "  diff= " << temp << endl;
 				// key num 1(left) = 49, num 2(top) = 50, num 3(right) = 51;
-				imwrite(filePlace + to_string(globalIndex) + "_" + to_string(key) + ".jpg", subImg);
+				imwrite(filePlace + to_string(globalIndex) + "_" + to_string(key) + ".png", subImg);
 				globalIndex++;
 			}
 		}
