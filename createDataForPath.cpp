@@ -8,30 +8,31 @@ using namespace std;
 int main()
 {
 	Mat image;
-	String filePlace = "E:/testvs/pdata/0723/hull64x32/";
+	String filePlace = "E:/testvs/pdata/0727/hull128x128/";
 	String srcfileType = ".png";
 	String srcfilePlace = "E:/testvs/pdata/0723/hull/";
 	int fIndex = 453;
-	int ROISize_width = 64;
-	int ROISize_height = 32;
+	int ROISize_width = 128;
+	int ROISize_height = 128;
 	float ROIArea = ROISize_width * ROISize_height;
-	float cloudRateThreshold = 0.1;
+	float cloudArea = 0;
+	float cloudRateThreshold_top = 0.9;
 	float cloudDiffThreshold = 0.05;
-	float noCloudRateThreshold = 0.1;
+	float cloudRateThreshold_floor = 0.1;
 	int fullBlack = 0;
 	int fullWhite = 0;
 	int globalIndex = 1;
 	int x, y, col, row, key;
-	int leftCloud = 0, rightCloud = 0;
+	int ltCloud = 0, rtCloud = 0, lbCloud = 0, rbCloud = 0;
 	Mat subImg;
 	time_t ctt = time(0);
 	cout << asctime(localtime(&ctt)) << std::endl;
 
-// -------------- Start -------------- //
+	// -------------- Start -------------- //
 	while (true)
 	{
 
-	// --------------- read image -------------- //
+		// --------------- read image -------------- //
 		String imgName = to_string(fIndex);
 		image = cv::imread(srcfilePlace + imgName + srcfileType, CV_LOAD_IMAGE_GRAYSCALE);
 		if (!image.data) // Check for invalid input
@@ -42,8 +43,8 @@ int main()
 			system("pause");
 			return -1;
 		}
-		resize(image,image,Size(image.cols/4,image.rows/4),0,0,CV_INTER_AREA);
-	// ----------------- 算一張圖可以放下幾行幾列的小圖 ------------------//
+		// resize(image, image, Size(image.cols / 4, image.rows / 4), 0, 0, CV_INTER_AREA);
+		// ----------------- 算一張圖可以放下幾行幾列的小圖 ------------------//
 		x = 0;
 		y = 0;
 		col = image.cols / ROISize_width;
@@ -51,7 +52,7 @@ int main()
 		row = image.rows / ROISize_height;
 		row = (image.rows % ROISize_height) > (ROISize_height / 2) ? (row + 1) : row;
 
-	// ----------------- 切割開始 ------------------ //
+		// ----------------- 切割開始 ------------------ //
 		for (int i = 0; i < row; i++)
 		{
 			// ----------- (x, y)) = 目前小圖左上角 ------------ //
@@ -64,11 +65,14 @@ int main()
 				if (j == col - 1)
 					x = image.cols - ROISize_width;
 				// 小圖切出，存入subImg
-				subImg = image(Rect(x, y, ROISize_width, ROISize_height)); 
+				subImg = image(Rect(x, y, ROISize_width, ROISize_height));
 
-			// ---------- 算image左右兩邊白色面積 ------------ //
-				leftCloud = 0;
-				rightCloud = 0;
+				// ---------- 算image左右兩邊白色面積 ------------ //
+				ltCloud = 0;
+				lbCloud = 0;
+				rtCloud = 0;
+				rbCloud = 0;
+
 				for (int k = 0; k < subImg.rows; k++)
 				{
 					uchar *ptr1 = subImg.ptr<uchar>(k);
@@ -78,60 +82,68 @@ int main()
 						{
 							if (z < (subImg.cols / 2))
 							{
-								leftCloud++;
+								if (k < (subImg.rows / 2))
+									ltCloud++;
+								else
+									lbCloud++;
 							}
 							else
 							{
-								rightCloud++;
+								if (k < subImg.rows / 2)
+									rtCloud++;
+								else
+									rbCloud++;
 							}
 						}
 					}
 				}
-			// ----------- Target設定 (key = target) ------------- //
-				if (leftCloud == 0 && rightCloud == 0)		//整張都黑的
+				// ----------- Target設定 (key = target) ------------- //
+				cloudArea = ltCloud + lbCloud + rtCloud + rbCloud;
+				if (cloudArea / ROIArea < cloudRateThreshold_floor)
 				{
 					key = 0;
-					fullBlack++;
-					if (fullBlack == 1000)
-						cout << "FB=> " << globalIndex;
-					if (fullBlack >= 1000)		// 超過1000張就不存
-						continue;
-				}
-				else if (leftCloud == (int)(ROIArea / 2) && rightCloud == (int)(ROIArea / 2))		// 整張都白的
-				{
-					key = 0;
-					fullWhite++;
-					if (fullWhite == 1000)
-						cout << "FW=> " << globalIndex;
-					if (fullWhite >= 1000)		// 超過1000張就不存
-						continue;
-				}
-				else if ((abs(leftCloud - rightCloud) / (ROIArea) < cloudDiffThreshold))		// 左右兩邊面積差異比例小於cloudDiffThreshold
-				{
-					key = 0;
-				}
-				else if (1-((leftCloud + rightCloud) / ROIArea) > noCloudRateThreshold)		// 總黑色面積比例大於noCloudRateThreshold
-				{
-					if (leftCloud > rightCloud && leftCloud / (ROIArea / 2) > cloudRateThreshold)	// 左邊多於右邊，且左邊白色面積比例大於cloudRateThreshold
+					if (cloudArea == 0)
 					{
-						key = 2;
-					}
-					else if (leftCloud <= rightCloud && rightCloud / (ROIArea / 2) > cloudRateThreshold)		//// 右邊多於左邊，且右邊白色面積比例大於cloudRateThreshold
-					{
-						key = 1;
+						fullBlack++;
+						if (fullBlack == 1000)
+							cout << "FB=> " << globalIndex;
+						if (fullBlack >= 1000) // 超過1000張就不存
+							continue;
 					}
 				}
-
+				else if (cloudArea / ROIArea > cloudRateThreshold_top)
+				{
+					key = 0;
+					if (cloudArea == ROIArea)
+					{
+						fullWhite++;
+						if (fullWhite == 1000)
+							cout << "FW=> " << globalIndex;
+						if (fullWhite >= 1000) // 超過1000張就不存
+							continue;
+					}
+				}
 				else
 				{
-					key = 0;
+					if ((abs(ltCloud - rtCloud) / (ROIArea / 2) < cloudDiffThreshold)) // 左右兩邊面積差異比例小於cloudDiffThreshold
+					{
+						key = 0;
+					}
+					else if (ltCloud > rtCloud) // 左邊多於右邊
+					{ 
+						key = 2;
+					}
+					else if (ltCloud <= rtCloud) // 右邊多於左邊
+					{ 
+						key = 1;
+					}
 				}
 
 				//namedWindow(imgName + "_" + to_string(i) + to_string(j));
 				//imshow(imgName + "_" + to_string(i) + to_string(j), subImg);
 				//key = waitKey(0);
 				//cout << globalIndex << "  fIndex " << fIndex << " " << i << " " << j << " key = " << key << endl;
-				float temp = (abs(leftCloud - rightCloud) / (ROIArea));
+				//float temp = (abs(leftCloud - rightCloud) / (ROIArea));
 				//cout << "    L = " << leftCloud << " R = " << rightCloud << "  diff= " << temp << endl;
 				// key num 1(left) = 49, num 2(top) = 50, num 3(right) = 51;
 				imwrite(filePlace + to_string(globalIndex) + "_" + to_string(key) + ".png", subImg);
