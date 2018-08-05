@@ -27,7 +27,7 @@ float histogramCal[498 + 251][256] = { 0 };
 int tag[498 + 251] = { 0 };
 
 
-HOGDescriptor *hog = new HOGDescriptor(Size(64,64), Size(16,16), Size(8,8), Size(8,8), 9, 1 );
+HOGDescriptor *hog = new HOGDescriptor(Size(64,64), Size(8,8), Size(4,4), Size(4,4), 9, 1 );
 
 vector< Mat >  hogDatas;
 
@@ -145,12 +145,12 @@ int main()
 	Ptr<TrainData> trainingData = TrainData::create(hogTrain_data, ROW_SAMPLE, labelsMat);
 	
 	SVM::ParamTypes params;
-	SVM::KernelTypes kernel_type = SVM::LINEAR;
+	SVM::KernelTypes kernel_type = SVM::RBF ;
 	Ptr<SVM> svm = SVM::create();
 	svm->setKernel(kernel_type);
 
 	svm->trainAuto(trainingData);
-	svm->save(record + "SVM_hog.xml");
+	svm->save(record + "SVM_hog_8x8.xml");
 
 	system("pause");
 	return 0;
