@@ -89,17 +89,19 @@ int main()
 			return -1;
 		}
 
-		int leftX = image.cols, leftY = image.rows, rightX = 0, rightY = 0;
 		int allArea = image.cols * image.rows;
-		//cout << leftX << " " << leftY << " " << rightX << " " << rightY << "\n";
 
-		//grabCut
+		
+		// ====================================================================================================//
+		// ============================================ GRABCUT ===============================================//
+		// ====================================================================================================//
+
 		Mat result(image.size(), CV_8UC1, Scalar(GC_BGD)); // segmentation result (4 possible values) (second)
 		Mat resultTemp;									   // segmentation result (4 possible values) (fist)
 		Mat bgModel, fgModel;							   // the models (internally used)
 		Mat foregroundTemp(image.size(), CV_8UC3, bgColor);
 
-		// 前後景MASK
+		// ---------------------------------------- 前後景MASK ---------------------------------//
 		for (int y = 0; y < image.rows; y++)
 		{
 			uchar *ptr2 = result.ptr<uchar>(y);
@@ -117,10 +119,10 @@ int main()
 
 			}
 		}
-
 		compare(result, GC_PR_FGD, resultTemp, CMP_EQ);
 		image.copyTo(foregroundTemp, resultTemp); // bg pixels not copied
 
+		// ----------------------------------- grabcut ---------------------------------//
 		grabCut(image,					// input image
 				result,					// segmentation result
 				cv::Rect(),				// rectangle containing foreground
@@ -129,20 +131,30 @@ int main()
 				cv::GC_INIT_WITH_MASK); // use rectangle
 										// Get the pixels marked as likely foreground
 
-		compare(result, cv::GC_PR_FGD, result, cv::CMP_EQ);
+		
+		// ====================================================================================================//
+		// ==================================== FIND CLOUD ROI ================================================//
+		// ====================================================================================================//
+
+
 		Mat foreground(image.size(), CV_8UC3, bgColor);
 		Mat foregroundBinary(image.size(), CV_8UC1, cv::Scalar(0));
 		Mat whiteImg(image.size(), CV_8UC1, cv::Scalar(255));
 		Mat getContours(image.size(), CV_8UC3, cv::Scalar(0, 0, 0));
 		Mat getHulls_b(image.size(), CV_8UC1, cv::Scalar(0));
 		Mat imgLBP;
-		image.copyTo(foreground, result); // bg pixels not copied
-		whiteImg.copyTo(foregroundBinary, result);
 
+		compare(result, cv::GC_PR_FGD, result, cv::CMP_EQ);			// result = mask after grabcut
+		image.copyTo(foreground, result); 							// foreground = foregroundTemp after grabcut
+		whiteImg.copyTo(foregroundBinary, result);					// foregroundBinary = one channel foreground 
+		
+		// ----------------------------------- findContours ---------------------------------//
 		vector<vector<Point>> contours;
 		vector<Vec4i> hierarchy;
 		findContours(foregroundBinary, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 		vector<vector<Point>> hull(contours.size());
+		
+		// ----------------------------------- cloud rois ---------------------------------//
 		for (int i = 0; i < contours.size(); i++)
 		{
 			double subArea = contourArea(contours[i], false);

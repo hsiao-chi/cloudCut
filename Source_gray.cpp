@@ -109,7 +109,7 @@ int main()
 			uchar *ptr1 = image.ptr<uchar>(y);
 			for (int x = 0; x < image.cols; x++)
 			{
-				if (!((int)ptr1[x] > whiteRGB)
+				if (!((int)ptr1[x] > whiteRGB))
 				{
 					ptr2[x] = GC_PR_BGD;
 				}
@@ -122,9 +122,11 @@ int main()
 		}
 		compare(result, GC_PR_FGD, mask, CMP_EQ);
 		image.copyTo(foregroundTemp, mask); // foregroundTemp = cloud with bgColor before grabcut
-
+		
 		// ----------------------------------- grabcut ---------------------------------//
-		grabCut(image,					// input image
+		Mat rgbImage;
+		cvtColor(image, rgbImage, CV_GRAY2BGR);
+		grabCut(rgbImage,					// input image
 				result,					// segmentation result
 				cv::Rect(),				// rectangle containing foreground
 				bgModel, fgModel,		// models
@@ -145,7 +147,7 @@ int main()
 		Mat imgLBP;
 		
 		compare(result, GC_PR_FGD, result, cv::CMP_EQ);		// result = mask after grabcut
-		image.copyTo(foreground, result); 					// foreground = foregroundTemp after grabcut
+		rgbImage.copyTo(foreground, result); 				// foreground = foregroundTemp after grabcut
 		whiteImg.copyTo(foregroundBinary, result);			// foregroundBinary = one channel foreground 
 
 		// ----------------------------------- findContours ---------------------------------//
