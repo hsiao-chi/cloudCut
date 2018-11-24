@@ -20,12 +20,12 @@ String record = "E:\\testvs\\pdata\\srcImg\\lbpRename\\";
 String loadLocationC = "E:\\testvs\\pdata\\srcImg\\lbpRename\\cloud\\";
 String loadLocationO = "E:\\testvs\\pdata\\srcImg\\lbpRename\\other\\";
 String fileType = ".jpg";
-String svmFileName = "svm1015.xml";
-int cloudAmount = 200;
-int otherAmount = 200;
-float histTemp[256] = {0};
-float histogramCal[200 + 200][256] = {0};
-int tag[200 + 200] = {0};
+String svmFileName = "svm1118.xml";
+int cloudAmount = 504;
+int otherAmount = 252;
+float histTemp[256] = { 0 };
+float histogramCal[504 + 252][256] = { 0 };
+int tag[504 + 252] = { 0 };
 
 HOGDescriptor *hog = new HOGDescriptor(Size(64, 64), Size(8, 8), Size(4, 4), Size(4, 4), 9, 1);
 
@@ -226,17 +226,19 @@ int main()
 	//==================================================================== //
 
 	Mat image;
-	int whiteRGB = 150;
+	Mat rgbImage1;
+	int whiteRGB = 130;
 	Scalar bgColor = Scalar(255, 0, 255);
-	String filePlace = "E:/testvs/pdata/1015/";
+	String filePlace = "E:/testvs/pdata/1118/";
 	String srcfileType = ".jpg";
-	String srcfilePlace = "E:/testvs/pdata/srcImg/cutImg/";
-	int fIndex = 10;
+	String srcfilePlace = "E:/testvs/pdata/1118/";
+	int fIndex = 1;
 	const time_t ctt = time(0);
 	cout << asctime(localtime(&ctt)) << std::endl;
 	while (true)
 	{
 		String imgName = to_string(fIndex);
+		rgbImage1 = cv::imread(srcfilePlace + imgName + srcfileType);
 		image = cv::imread(srcfilePlace + imgName + srcfileType, CV_LOAD_IMAGE_GRAYSCALE);
 
 		if (!image.data) // Check for invalid input
@@ -281,26 +283,26 @@ int main()
 		compare(result, GC_PR_FGD, mask, CMP_EQ);
 		image.copyTo(foregroundTemp, mask); // foregroundTemp = cloud with bgColor before grabcut
 
-		// ----------------------------------- grabcut ---------------------------------//
+											// ----------------------------------- grabcut ---------------------------------//
 		Mat rgbImage;
 		cvtColor(image, rgbImage, CV_GRAY2BGR);
 		grabCut(rgbImage,				// input image
-				result,					// segmentation result
-				cv::Rect(),				// rectangle containing foreground
-				bgModel, fgModel,		// models
-				2,						// number of iterations
-				cv::GC_INIT_WITH_MASK); // use rectangle
-										// Get the pixels marked as likely foreground
+			result,					// segmentation result
+			cv::Rect(),				// rectangle containing foreground
+			bgModel, fgModel,		// models
+			2,						// number of iterations
+			cv::GC_INIT_WITH_MASK); // use rectangle
+									// Get the pixels marked as likely foreground
 
-		// ====================================================================================================//
-		// ==================================== FIND CLOUD ROI ================================================//
-		// ====================================================================================================//
+									// ====================================================================================================//
+									// ==================================== FIND CLOUD ROI ================================================//
+									// ====================================================================================================//
 
 		Mat foreground(image.size(), CV_8UC3, bgColor);
 		Mat foregroundBinary(image.size(), CV_8UC1, Scalar(0));
 		Mat foregroundBinary1(image.size(), CV_8UC1, Scalar(0));
 		Mat whiteImg(image.size(), CV_8UC1, Scalar(255));
-		Mat getContoursSVM(image.size(), CV_8UC1, Scalar(0));
+		Mat getContoursSVM(image.size(), CV_8UC3, Scalar(0,0,0));
 		Mat getContours(image.size(), CV_8UC1, Scalar(0));
 		// Mat getHulls_b(image.size(), CV_8UC1, Scalar(0));
 		Mat afterFilterArea(image.size(), CV_8UC1, Scalar(0));
@@ -311,7 +313,7 @@ int main()
 		whiteImg.copyTo(foregroundBinary, result);		// foregroundBinary = one channel foreground
 		image.copyTo(foregroundBinary1, result);		// foregroundBinary = one channel foreground
 
-		// ----------------------------------- findContours ---------------------------------//
+														// ----------------------------------- findContours ---------------------------------//
 		vector<vector<Point>> contours;
 		vector<Vec4i> hierarchy;
 		findContours(foregroundBinary, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
@@ -331,30 +333,30 @@ int main()
 				imwrite(filePlace + "/lbp/" + imgName + "_" + to_string(i) + "_lbp.jpg", imgLBP);
 				imwrite(filePlace + "/lbp/" + imgName + "_" + to_string(i) + "_roi.jpg", foregroundROI);
 				drawContours(getContours, contours, i, bgColor, CV_FILLED, 8, hierarchy);
-				
+
 				vector<float> src = hogCompute(imgLBP);
 				Mat hogTrain_data;
 				convert_to_ml2(hogTrain_data, Mat(src));
 				int response = svm->predict(hogTrain_data);
 				if (response == -1) continue;
 
-				drawContours(getContoursSVM, contours, i, Scalar(255), CV_FILLED, 8, hierarchy);
-				// cv::rectangle(getContours, bounding_rect, bgColor, 2);
+				drawContours(getContoursSVM, contours, i, bgColor, CV_FILLED, 8, hierarchy);
+				cv::rectangle(getContoursSVM, bounding_rect, bgColor, 2);
 
 				// convexHull(Mat(contours[i]), hull[i], false);
 				// drawContours(getHulls_b, hull, i, Scalar(255), CV_FILLED, 8, hierarchy);
-				cv::rectangle(rgbImage, bounding_rect, bgColor, 6);
-				// drawContours(image, contours, i, bgColor, 2, 8, hierarchy);
+				//cv::rectangle(rgbImage, bounding_rect, bgColor, 8);
+				drawContours(rgbImage1, contours, i, Scalar(0,0,255), 2, 8, hierarchy);
 			}
 		}
-		imwrite(filePlace + "/img/" + imgName + "_1-origin.jpg", rgbImage);
+		imwrite(filePlace + "/img/" + imgName + "_1-origin.jpg", rgbImage1);
 		imwrite(filePlace + "/img/" + imgName + "_2-beforeFilter.jpg", foregroundBinary);
 		imwrite(filePlace + "/img/" + imgName + "_4-afterSVMFilter.jpg", getContoursSVM);
 		imwrite(filePlace + "/img/" + imgName + "_3-onlySizeFilter.jpg", getContours);
 		// imwrite(filePlace + "/hull/" + imgName + ".jpg", getHulls_b);
-		compare(getContoursSVM, Scalar(255), getContoursSVM, CMP_EQ);
-		foregroundBinary1.copyTo(afterFilterArea, getContoursSVM);			// foregroundBinary = one channel foreground
-		imwrite(filePlace + "/img/" + imgName + "_5-blackBG.jpg", afterFilterArea);
+		// compare(getContoursSVM, Scalar(255), getContoursSVM, CMP_EQ);
+		// foregroundBinary1.copyTo(afterFilterArea, getContoursSVM);			// foregroundBinary = one channel foreground
+		// imwrite(filePlace + "/img/" + imgName + "_5-blackBG.jpg", afterFilterArea);
 
 		fIndex++;
 	}

@@ -67,18 +67,19 @@ Mat LBP(Mat src_image)
 int main()
 {
 	Mat image;
-	int whiteRGB = 120;
+	int whiteRGB = 180;
 	Scalar bgColor = Scalar(255, 0, 255);
-	String filePlace = "E:/testvs/pdata/0910/";
+	String filePlace = "E:/testvs/pdata/1102/";
 	String srcfileType = ".jpg";
-	String srcfilePlace = "E:/testvs/pdata/srcImg/cutImg/";
+	String srcfilePlace = "E:/testvs/pdata/srcImg/";
 	int fIndex = 10;
 	const time_t ctt = time(0);
 	cout << asctime(localtime(&ctt)) << std::endl;
 	while (true)
 	{
 		String imgName = to_string(fIndex);
-		image = cv::imread(srcfilePlace + imgName + srcfileType, CV_LOAD_IMAGE_GRAYSCALE);
+		// image = cv::imread(srcfilePlace + imgName + srcfileType, CV_LOAD_IMAGE_GRAYSCALE);
+		image = cv::imread(srcfilePlace + "Cloud_TestData.png", CV_LOAD_IMAGE_GRAYSCALE);
 		
 		if (!image.data) // Check for invalid input
 		{
@@ -140,6 +141,8 @@ int main()
 		// ====================================================================================================//
 
 		Mat foreground(image.size(), CV_8UC3, bgColor);
+		Mat toGetContoursWithBGColor(image.size(), CV_8UC3, bgColor);
+		Mat foregroundWithBGColor(image.size(), CV_8UC3, bgColor);
 		Mat foregroundBinary(image.size(), CV_8UC1, Scalar(0));
 		Mat whiteImg(image.size(), CV_8UC1, Scalar(255));
 		Mat getContours(image.size(), CV_8UC3, Scalar(0, 0, 0));
@@ -149,6 +152,7 @@ int main()
 		compare(result, GC_PR_FGD, result, cv::CMP_EQ);		// result = mask after grabcut
 		rgbImage.copyTo(foreground, result); 				// foreground = foregroundTemp after grabcut
 		whiteImg.copyTo(foregroundBinary, result);			// foregroundBinary = one channel foreground 
+		// whiteImg.copyTo(toGetContoursWithBGColor, result);			// foregroundBinary = one channel foreground 
 
 		// ----------------------------------- findContours ---------------------------------//
 		vector<vector<Point>> contours;
@@ -166,8 +170,13 @@ int main()
 				Rect bounding_rect = boundingRect(contours[i]);
 				Mat foregroundROI = foreground(bounding_rect);
 				imgLBP = LBP(foregroundROI);
+				compare(foregroundROI, bgColor, mask, CMP_NE);
+				foregroundROI.copyTo(foregroundTemp, mask);
 				drawContours(getContours, contours, i, bgColor, CV_FILLED, 8, hierarchy);
+				drawContours(toGetContoursWithBGColor, contours, i, Scalar(255, 255, 255), CV_FILLED, 8, hierarchy);
+				drawContours(toGetContoursWithBGColor, contours, i, Scalar(93, 255, 0), 5, 8, hierarchy);
 				cv::rectangle(getContours, bounding_rect, cv::Scalar(0, 0, 255), 2);
+				cv::rectangle(toGetContoursWithBGColor, bounding_rect, cv::Scalar(255), 5);
 
 				convexHull(Mat(contours[i]), hull[i], false);
 				drawContours(getHulls_b, hull, i, Scalar(255), CV_FILLED, 8, hierarchy);
@@ -179,10 +188,14 @@ int main()
 
 		imwrite(filePlace+"/img/" + imgName + "_a.jpg", image);
 		imwrite(filePlace+"/img/" + imgName + "_b.jpg", foregroundBinary);
-		imwrite(filePlace+"/img/" + imgName + "_c.jpg", getContours);
+		imwrite(filePlace + "/img/" + imgName + "_c.jpg", getContours);
+		imwrite(filePlace+"/img/" + imgName + "_d.jpg", toGetContoursWithBGColor);
+		imwrite(filePlace+"/img/" + imgName + "_e.jpg", foreground);
+		imwrite(filePlace+"/img/" + imgName + "_f.jpg", foregroundWithBGColor);
 		imwrite(filePlace+"/hull/" + imgName + ".jpg", getHulls_b);
 
 		fIndex++;
+		break;
 	}
 
 	waitKey();
