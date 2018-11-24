@@ -15,8 +15,6 @@ Mat LBP(Mat src_image)
 	if (temp_image.channels() == 3)
 		cvtColor(temp_image, Image, CV_BGR2GRAY);
 
-	//imshow("src_image", Image);
-
 	int center = 0;
 	int center_lbp = 0;
 
@@ -51,16 +49,9 @@ Mat LBP(Mat src_image)
 
 			if (center <= Image.at<uchar>(row + 1, col + 1))
 				center_lbp += 128;
-
-			//cout << "center lbp value: " << center_lbp << endl;
 			lbp.at<uchar>(row, col) = center_lbp;
 		}
 	}
-
-	//imshow("lbp_image", lbp);
-	//waitKey(0);
-	//destroyAllWindows();
-
 	return lbp;
 }
 
@@ -69,17 +60,16 @@ int main()
 	Mat image;
 	int whiteRGB = 120;
 	Scalar bgColor = Scalar(255, 0, 255);
-	String filePlace = "E:/testvs/pdata/0713/";
+	String filePlace = "<the result file path>";
 	String srcfileType = ".jpg";
-	String srcfilePlace = "E:/testvs/pdata/srcImg/img 453-836 (england)/";
-	int fIndex=453;
+	String srcfilePlace = "<the source file path>";
+	int fIndex=0;		// file name index
 	const time_t ctt = time(0);
 	cout << asctime(localtime(&ctt)) << std::endl;
 	while (true)
 	{
-		String imgName = to_string(fIndex);
-		image = cv::imread(srcfilePlace + imgName + srcfileType);
-
+		String imgName = to_string(fIndex);								// image name as file index
+		image = cv::imread(srcfilePlace + imgName + srcfileType);		// read image
 		if (!image.data) // Check for invalid input
 		{
 			const time_t ctt = time(0);
@@ -88,7 +78,6 @@ int main()
 			system("pause");
 			return -1;
 		}
-
 		int allArea = image.cols * image.rows;
 
 		
@@ -96,10 +85,10 @@ int main()
 		// ============================================ GRABCUT ===============================================//
 		// ====================================================================================================//
 
-		Mat result(image.size(), CV_8UC1, Scalar(GC_BGD)); // segmentation result (4 possible values) (second)
-		Mat resultTemp;									   // segmentation result (4 possible values) (fist)
-		Mat bgModel, fgModel;							   // the models (internally used)
-		Mat foregroundTemp(image.size(), CV_8UC3, bgColor);
+		Mat result(image.size(), CV_8UC1, Scalar(GC_BGD)); 		// segmentation result (4 possible values) (second)
+		Mat resultTemp;									   		// segmentation result (4 possible values) (fist)
+		Mat bgModel, fgModel;							   		// the models (internally used)
+		Mat foregroundTemp(image.size(), CV_8UC3, bgColor);		//
 
 		// ---------------------------------------- 前後景MASK ---------------------------------//
 		for (int y = 0; y < image.rows; y++)

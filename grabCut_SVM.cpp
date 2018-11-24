@@ -16,11 +16,14 @@ using namespace cv;
 using namespace std;
 using namespace ml;
 
-String record = "E:\\testvs\\pdata\\srcImg\\lbpRename\\";
-String loadLocationC = "E:\\testvs\\pdata\\srcImg\\lbpRename\\cloud\\";
-String loadLocationO = "E:\\testvs\\pdata\\srcImg\\lbpRename\\other\\";
+// ============================================================ //
+// ================== SVM Training Setting ==================== //
+// ============================================================ //
+String record = "<LBP training Set file path>";
+String loadLocationC = "<LBP training Set file path (Cloud)>";
+String loadLocationO = "<LBP training Set file path (Not Cloud)>";
 String fileType = ".jpg";
-String svmFileName = "svm1118.xml";
+String svmFileName = "<svm model name>.xml";
 int cloudAmount = 504;
 int otherAmount = 252;
 float histTemp[256] = { 0 };
@@ -62,11 +65,7 @@ void convert_to_ml2(Mat &trainData, Mat hogDatas)
 	const int cols = (int)std::max(hogDatas.cols, hogDatas.rows);
 	Mat tmp(1, cols, CV_32FC1); //< used for transposition if needed
 	trainData = Mat(1, cols, CV_32FC1);
-
-	// for (size_t i = 0; i < hogDatas.size(); ++i)
-	// {
 	CV_Assert(hogDatas.cols == 1 || hogDatas.rows == 1);
-
 	if (hogDatas.cols == 1)
 	{
 		transpose(hogDatas, tmp);
@@ -76,7 +75,6 @@ void convert_to_ml2(Mat &trainData, Mat hogDatas)
 	{
 		hogDatas.copyTo(trainData.row(0));
 	}
-	// }
 }
 
 vector<float> hogCompute(Mat lbp)
@@ -111,18 +109,6 @@ Ptr<SVM> SVMtrain(Mat &trainMat, Mat trainLabels)
 	svm->save(record + svmFileName);
 	getSVMParams(svm);
 	return svm;
-	/*
-	To acheive 100% rate.
-	Descriptor Size : 576
-	Kernel type     : 2
-	Type            : 100
-	C               : 2.5
-	Degree          : 0
-	Nu              : 0
-	Gamma           : 0.03375
-	the accuracy is :100
-
-	*/
 }
 
 Mat LBP(Mat src_image)
@@ -133,9 +119,6 @@ Mat LBP(Mat src_image)
 
 	if (temp_image.channels() == 3)
 		cvtColor(temp_image, Image, CV_BGR2GRAY);
-
-	//imshow("src_image", Image);
-
 	int center = 0;
 	int center_lbp = 0;
 
@@ -170,16 +153,9 @@ Mat LBP(Mat src_image)
 
 			if (center <= Image.at<uchar>(row + 1, col + 1))
 				center_lbp += 128;
-
-			//cout << "center lbp value: " << center_lbp << endl;
 			lbp.at<uchar>(row, col) = center_lbp;
 		}
 	}
-
-	//imshow("lbp_image", lbp);
-	//waitKey(0);
-	//destroyAllWindows();
-
 	return lbp;
 }
 
@@ -282,8 +258,7 @@ int main()
 		}
 		compare(result, GC_PR_FGD, mask, CMP_EQ);
 		image.copyTo(foregroundTemp, mask); // foregroundTemp = cloud with bgColor before grabcut
-
-											// ----------------------------------- grabcut ---------------------------------//
+		// ----------------------------------- grabcut ---------------------------------//
 		Mat rgbImage;
 		cvtColor(image, rgbImage, CV_GRAY2BGR);
 		grabCut(rgbImage,				// input image
@@ -342,10 +317,6 @@ int main()
 
 				drawContours(getContoursSVM, contours, i, bgColor, CV_FILLED, 8, hierarchy);
 				cv::rectangle(getContoursSVM, bounding_rect, bgColor, 2);
-
-				// convexHull(Mat(contours[i]), hull[i], false);
-				// drawContours(getHulls_b, hull, i, Scalar(255), CV_FILLED, 8, hierarchy);
-				//cv::rectangle(rgbImage, bounding_rect, bgColor, 8);
 				drawContours(rgbImage1, contours, i, Scalar(0,0,255), 2, 8, hierarchy);
 			}
 		}
@@ -353,10 +324,6 @@ int main()
 		imwrite(filePlace + "/img/" + imgName + "_2-beforeFilter.jpg", foregroundBinary);
 		imwrite(filePlace + "/img/" + imgName + "_4-afterSVMFilter.jpg", getContoursSVM);
 		imwrite(filePlace + "/img/" + imgName + "_3-onlySizeFilter.jpg", getContours);
-		// imwrite(filePlace + "/hull/" + imgName + ".jpg", getHulls_b);
-		// compare(getContoursSVM, Scalar(255), getContoursSVM, CMP_EQ);
-		// foregroundBinary1.copyTo(afterFilterArea, getContoursSVM);			// foregroundBinary = one channel foreground
-		// imwrite(filePlace + "/img/" + imgName + "_5-blackBG.jpg", afterFilterArea);
 
 		fIndex++;
 	}
